@@ -1,54 +1,80 @@
-use std::fs::File;
-use std::io::{self, BufRead};
-use std::error::Error;
-use std::path::Path;
+use std::collections::HashMap;
 
+// Check what your move is
+// write if statement for each scenario
+// look up accordingly
 
-fn main() -> Result<(), Box<dyn Error>> {
-    let mut highest_cal_elves: Vec<i32> = Vec::new();
-    let mut cur_cal_total: i32 = 0;
+fn main() {
+    let input = include_str!("../input");
+    let lines = input.split("\n");
 
-    if let Ok(lines) = read_lines("input") {
-        for line in lines {
-            if let Ok(cals) = line {
-                // if not empty, then we add to the current total for this set
-                if !cals.is_empty() {
-                    cur_cal_total += cals.parse::<i32>().unwrap();
-                }
-                // if empty, it means a new set of calories
-                if cals.is_empty() {
-                    // just push to the vec
-                    highest_cal_elves.push(cur_cal_total);
-                    cur_cal_total = 0;
-                }
+    let mut total_score = 0;
+    let move_scoring = HashMap::from([
+        ("X", 1),
+        ("Y", 2),
+        ("Z", 3)
+    ]);
+
+    // need to map which move loses to what
+    // A (rock) loses to Y (paper)
+    let winning_moves = HashMap::from([
+        ("A", "Y"),
+        ("B", "Z"),
+        ("C", "X"),
+    ]);
+
+    let losing_moves = HashMap::from([
+        ("A", "Z"),
+        ("B", "X"),
+        ("C", "Y"),
+    ]);
+
+    let draw_moves = HashMap::from([
+        ("A", "X"),
+        ("B", "Y"),
+        ("C", "Z"),
+    ]);
+
+    let move_mapping = HashMap::from([
+        ("A", "Rock"),
+        ("B", "Paper"),
+        ("C", "Scissors"),
+        ("X", "Rock"),
+        ("Y", "Paper"),
+        ("Z", "Scissors"),
+    ]);
+
+    for l in lines {
+        let moves = l.split(" ").collect::<Vec<&str>>();
+        if moves.len() == 2 {
+            println!("{} vs {}", move_mapping.get(moves[0]).unwrap(), move_mapping.get(moves[1]).unwrap());
+            let your_move = moves[1];
+
+            if your_move == "Y" {
+                // must draw
+                let draw_move = draw_moves.get(moves[0]).unwrap();
+                total_score += move_scoring.get(draw_move).unwrap();
+                total_score += 3
             }
+
+            if your_move == "X" {
+                // must lose
+                let lose_move = losing_moves.get(moves[0]).unwrap();
+                total_score += move_scoring.get(lose_move).unwrap();
+            }
+
+            if your_move == "Z" {
+                // must win
+                let win_move = winning_moves.get(moves[0]).unwrap();
+                total_score += move_scoring.get(win_move).unwrap();
+                total_score += 6
+            }
+            
+            println!("{}", total_score);
+            println!("---------------------");
         }
     }
 
-    // sort totals
-    // highest_cal_elves.sort();
-    //
-    // // reverse it
-    // highest_cal_elves.reverse();
-
-    highest_cal_elves.sort_by(|a,b| b.partial_cmp(a).unwrap());
-
-    // create variable to hold the total
-    let mut chad_elf_total: i32 = 0;
-
-    // loop through a slice of the vec ([0..3]), top 3
-    for cals in &highest_cal_elves[0..3] {
-        // add to the existing total
-        chad_elf_total += cals
-    }
-
-    println!("{:?}", chad_elf_total);
-    Ok(())
+    println!("{}", total_score);
 }
 
-
-fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>
-where P: AsRef<Path>, {
-    let file = File::open(filename)?;
-    Ok(io::BufReader::new(file).lines())
-}

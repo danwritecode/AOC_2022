@@ -1,55 +1,101 @@
+use anyhow::Result;
 use std::collections::HashMap;
+// use itertools::Itertools;
 
-
-fn main() {
+fn main() -> Result<()> {
     let input = include_str!("../input");
-    let lines = input.split('\n').collect::<Vec<&str>>();
-    let mut num_contained_ranges = 0;
 
-    for line in lines {
-        let mut first_lower: i32 = 0;
-        let mut first_upper: i32 = 0;
-        let mut sec_lower: i32 = 0;
-        let mut sec_upper: i32 = 0;
+    let input: Vec<Vec<u32>> = input
+        .lines()
+        .map(|l| {
+            return l
+                .chars()
+                .map(|c| c.to_digit(10).unwrap())
+                .collect()
+        })
+        .collect();
 
-        if !line.is_empty() {
-            let halves = line.split(",").collect::<Vec<&str>>();
+    let mut total_seen = 0;
+    let num_rows = input.len();
+    let mut high_score = 0;
 
-            // value of Halves at this point ["2-6", "4-8"]
-            for (i, half) in halves.iter().enumerate() {
-                // half = "2-6"
-                let str_nums = half.split("-").collect::<Vec<&str>>();
 
-                // strNums = ["2", "6"]
-                for (ni, str_num) in str_nums.iter().enumerate() {
-                    let num = str_num.parse::<i32>().unwrap();
-                    if i == 0 { // lower bound
-                        if ni == 0 { // first num 
-                            first_lower = num;
-                        } else { // second num
-                            first_upper = num;
-                        }
-                    } else {
-                        if ni == 0 { // first num 
-                            sec_lower = num;
-                        } else { // second num
-                            sec_upper = num;
+    for (ri, row) in input.iter().enumerate() {
+        println!("{:?}", &row);
+        let row_len = row.len();
+        // check if first or last row
+        if ri == 0 || ri == num_rows - 1 {
+            total_seen += row_len;
+        } else {
+            // loop through trees now
+            for (ti, tree) in row.iter().enumerate() {
+                dbg!(&tree);
+                // check if 1st or last tree in row
+                if ti == 0 || ti == row.len() - 1 {
+                    total_seen += 1;
+                } else {
+                    let right = &row[ti + 1..];
+                    let mut r_score = 0;
+
+                    let left = &row[..ti];
+                    let mut l_score = 0;
+
+                    let up = &input[..ri];
+                    let mut u_score = 0;
+
+                    let down = &input[ri + 1 ..];
+                    let mut d_score = 0;
+
+                    let mut tree_score = 0;
+
+                    for rt in right {
+                        if rt >= tree {
+                            r_score += 1;
+                            break;
+                        } else {
+                            r_score += 1;
                         }
                     }
-                }
-            }
-            // println!("{} {} {} {}", first_lower, first_upper, sec_lower, sec_upper);
 
-            if first_upper >= sec_lower && first_lower <= sec_upper {
-                // println!("Overlap");
-                println!("{:?}", halves);
-                num_contained_ranges += 1;
-            } else {
-                // println!("{:?}", halves);
+                    for lt in left.iter().rev() {
+                        if lt >= tree {
+                            l_score += 1;
+                            break;
+                        } else {
+                            l_score += 1;
+                        }
+                    }
+
+                    for ut in up.iter().rev() {
+                        if &ut[ti] >= tree {
+                            u_score += 1;
+                            break;
+                        } else {
+                            u_score += 1;
+                        }
+                    }
+
+                    for dt in down {
+                        if &dt[ti] >= tree {
+                            d_score += 1;
+                            break;
+                        } else {
+                            d_score += 1;
+                        }
+                    }
+
+                    tree_score = r_score * l_score * u_score * d_score;
+
+                    if tree_score > high_score {
+                        high_score = tree_score;
+                    }
+                    dbg!(tree_score);
+                }
             }
         }
     }
 
-    println!("{}", num_contained_ranges);
+    dbg!(high_score);
+    return Ok(());
 }
 

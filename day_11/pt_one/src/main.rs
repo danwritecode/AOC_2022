@@ -4,6 +4,7 @@ use std::ops::Div;
 // use itertools::Itertools;
 
 #[derive(Debug)]
+#[derive(Clone)]
 struct Monkey {
     items: Vec<i32>,
     operation: char,
@@ -29,13 +30,14 @@ fn main() -> Result<()> {
     let num_rounds = 1;
 
     for _round in 0..num_rounds {
-        for mut monkey in &mut monkeys {
+        for (i, _) in monkeys.clone().iter().enumerate() {
+            let monkey = monkeys[i].clone();
             for item in &monkey.items {
                 if monkey.operation == '*' {
-                    monkey.worry_level = item * monkey.operation_value;
+                    monkeys[i].worry_level = item * monkey.operation_value;
                 }
                 if monkey.operation == '+' {
-                    monkey.worry_level = item + monkey.operation_value;
+                    monkeys[i].worry_level = item + monkey.operation_value;
                 }
 
                 let worry_div = (&monkey.worry_level/3).div(1);
@@ -48,7 +50,29 @@ fn main() -> Result<()> {
                 }
             }
         }
-    };
+    }
+
+    // for _round in 0..num_rounds {
+    //     for mut monkey in &mut monkeys {
+    //         for item in &monkey.items {
+    //             if monkey.operation == '*' {
+    //                 monkey.worry_level = item * monkey.operation_value;
+    //             }
+    //             if monkey.operation == '+' {
+    //                 monkey.worry_level = item + monkey.operation_value;
+    //             }
+    //
+    //             let worry_div = (&monkey.worry_level/3).div(1);
+    //             let worry_mod = worry_div % monkey.mod_test;
+    //
+    //             if worry_mod == 0 {
+    //                 monkeys[monkey.true_target as usize].items.push(worry_div);
+    //             } else {
+    //                 monkeys[monkey.false_target as usize].items.push(worry_div);
+    //             }
+    //         }
+    //     }
+    // };
 
     dbg!(monkeys);
     return Ok(());

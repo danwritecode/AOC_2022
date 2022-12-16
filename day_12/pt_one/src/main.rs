@@ -1,7 +1,7 @@
 use anyhow::Result;
+use petgraph::prelude::{GraphMap, UnGraphMap};
 use petgraph::visit::IntoNodeIdentifiers;
 use std::collections::HashMap;
-use petgraph::Graph;
 use petgraph::algo::dijkstra;
 // use itertools::Itertools;
 
@@ -20,18 +20,15 @@ fn main() -> Result<()> {
     
     // Identify positions of S and E
     let start_end = get_start_end(&input);
-    let edges: Vec<(u32, u32)> = create_edges(&input);
+    let mut edges: Vec<(i32, i32)> = create_edges(&input);
 
-    let g = Graph::<u32, ()>::from_edges(&edges);
-    let node_map = dijkstra(&g, 1.into(), Some(4.into()), |_| 1);
+    let g = UnGraphMap::<i32, ()>::from_edges(&edges);
+    let node_map = dijkstra(&g, 83, Some(69), |_| 1);
     
-    let nodes = g.node_identifiers();
+    // let nodes = g.node_identifiers();
 
-    for node in nodes {
-        println!("{:?}",g.node_weight(node));
-    }
-
-    println!("{:?}", g);
+    println!("{:?}", edges);
+    println!("{:?}", node_map);
 
 
     return Ok(());
@@ -53,26 +50,38 @@ fn get_start_end(input: &Vec<Vec<char>>) -> HashMap<char, Vec<usize>> {
     return start_end;
 }
 
-fn create_edges(input: &Vec<Vec<char>>) -> Vec<(u32, u32)> {
-    let mut edges: Vec<(u32, u32)> = vec![];
+fn create_edges(input: &Vec<Vec<char>>) -> Vec<(i32, i32)> {
+    let mut edges: Vec<(i32, i32)> = vec![];
 
     for (li,line) in input.iter().enumerate() {
         for (ci, char) in line.iter().enumerate() {
             // left
             if ci > 0 {
-                edges.push((*char as u32, line[ci - 1] as u32));
+                let dif = line[ci - 1] as i32 - *char as i32;
+                if dif <= 1 || *char as i32 == 69 || *char as i32 == 83 {
+                    edges.push((*char as i32, line[ci - 1] as i32));
+                }
             }
             // right
             if ci < line.len() - 1 {
-                edges.push((*char as u32, line[ci + 1] as u32));
+                let dif = line[ci + 1] as i32 - *char as i32;
+                if dif <= 1 || *char as i32 == 69 || *char as i32 == 83 {
+                    edges.push((*char as i32, line[ci + 1] as i32));
+                }
             }
             // up
             if li > 0 {
-                edges.push((*char as u32, input[li - 1][ci] as u32));
+                let dif = input[li - 1][ci] as i32 - *char as i32;
+                if dif <= 1 || *char as i32 == 69 || *char as i32 == 83 {
+                    edges.push((*char as i32, input[li - 1][ci] as i32));
+                }
             }
             // down
             if li < input.len() - 1 {
-                edges.push((*char as u32, input[li + 1][ci] as u32));
+                let dif = input[li + 1][ci] as i32 - *char as i32;
+                if dif <= 1 || *char as i32 == 69 || *char as i32 == 83 {
+                    edges.push((*char as i32, input[li + 1][ci] as i32));
+                }
             }
         }
     }

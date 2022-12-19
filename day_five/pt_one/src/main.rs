@@ -1,23 +1,23 @@
 // use std::collections::HashMap;
 use std::collections::{VecDeque, HashMap};
 use anyhow::Result;
-use itertools::{Itertools, enumerate};
+use itertools::{Itertools};
 use scan_fmt::scan_fmt_some;
 
 
 #[derive(Debug)]
 struct CrateCommands {
-    quantity: u32,
-    source: u32,
-    destination: u32
+    quantity: usize,
+    source: usize,
+    destination: usize
 }
 
 fn main() -> Result<()> {
-    let input = include_str!("../test");
+    let input = include_str!("../input");
 
     let (crates, ins) = input.split("\n\n").into_iter().collect_tuple().unwrap();
     
-    let crates = crates
+    let mut crates = crates
         .lines()
         .flat_map(|l| {
             return l
@@ -29,21 +29,45 @@ fn main() -> Result<()> {
         })
         .into_grouping_map()
         .collect::<VecDeque<char>>();
-        
     
+
     let mut parsed_ins = vec![];
-    
+
     for line in ins.lines() {
-        let (qty, src, dest) = scan_fmt_some!(line, "move {} from {} to {}", u32, u32, u32);
+        let (qty, src, dest) = scan_fmt_some!(line, "move {} from {} to {}", usize, usize, usize);
         parsed_ins.push(CrateCommands {
             quantity:qty.unwrap(),
-            source:src.unwrap(),
-            destination: dest.unwrap()
+            source:src.unwrap() - 1,
+            destination: dest.unwrap() - 1
         });
     }
 
+    for ins in &parsed_ins {
+        if ins.quantity == 1 {
+            let removed = crates.get_mut(&ins.source).unwrap().pop_front(); 
+            crates.get_mut(&ins.destination).unwrap().push_front(removed.unwrap());
+        } else {
+            let mut removed_mult: VecDeque<char> = crates.get_mut(&ins.source).unwrap().drain(..ins.quantity).collect(); 
+            let len = removed_mult.len();
+            dbg!(&removed_mult);
 
-    println!("{:?}", parsed_ins);
+            for _crt in 0..len {
+                let removed = removed_mult.pop_back(); 
+                crates.get_mut(&ins.destination).unwrap().push_front(removed.unwrap());
+                dbg!(&crates);
+            }
+        }
+    }
+
+
+    let mut top_crates = vec![];
+
+    for key in crates.keys().sorted() {
+        dbg!(key);
+        top_crates.push(crates.get(key).unwrap()[0]);
+    }
+
+    println!("{:?}", top_crates);
 
     return Ok(());
 }

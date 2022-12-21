@@ -13,7 +13,7 @@ struct CrateCommands {
 }
 
 fn main() -> Result<()> {
-    let input = include_str!("../input");
+    let input = include_str!("../test");
 
     let (crates, ins) = input.split("\n\n").into_iter().collect_tuple().unwrap();
     
@@ -43,19 +43,12 @@ fn main() -> Result<()> {
     }
 
     for ins in &parsed_ins {
-        if ins.quantity == 1 {
+        // loop through number to move
+        for _i in 0..ins.quantity {
             let removed = crates.get_mut(&ins.source).unwrap().pop_front(); 
             crates.get_mut(&ins.destination).unwrap().push_front(removed.unwrap());
-        } else {
-            let mut removed_mult: VecDeque<char> = crates.get_mut(&ins.source).unwrap().drain(..ins.quantity).collect(); 
-            let len = removed_mult.len();
-            dbg!(&removed_mult);
-
-            for _crt in 0..len {
-                let removed = removed_mult.pop_back(); 
-                crates.get_mut(&ins.destination).unwrap().push_front(removed.unwrap());
-                dbg!(&crates);
-            }
+            dbg!(&removed);
+            dbg!(&crates);
         }
     }
 

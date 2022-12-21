@@ -1,55 +1,73 @@
-use std::collections::HashMap;
+// use std::collections::HashMap;
+use std::collections::{VecDeque, HashMap};
+use anyhow::Result;
+use itertools::{Itertools};
+use scan_fmt::scan_fmt_some;
 
 
-fn main() {
+#[derive(Debug)]
+struct CrateCommands {
+    quantity: usize,
+    source: usize,
+    destination: usize
+}
+
+fn main() -> Result<()> {
     let input = include_str!("../input");
-    let lines = input.split('\n').collect::<Vec<&str>>();
-    let mut num_contained_ranges = 0;
 
-    for line in lines {
-        let mut first_lower: i32 = 0;
-        let mut first_upper: i32 = 0;
-        let mut sec_lower: i32 = 0;
-        let mut sec_upper: i32 = 0;
+    let (crates, ins) = input.split("\n\n").into_iter().collect_tuple().unwrap();
+    
+    let mut crates = crates
+        .lines()
+        .flat_map(|l| {
+            return l
+                .chars()
+                .skip(1)
+                .step_by(4)
+                .enumerate()
+                .filter(|(_,c)| c.is_alphabetic())
+        })
+        .into_grouping_map()
+        .collect::<VecDeque<char>>();
+    
 
-        if !line.is_empty() {
-            let halves = line.split(",").collect::<Vec<&str>>();
+    let mut parsed_ins = vec![];
 
-            // value of Halves at this point ["2-6", "4-8"]
-            for (i, half) in halves.iter().enumerate() {
-                // half = "2-6"
-                let str_nums = half.split("-").collect::<Vec<&str>>();
+    for line in ins.lines() {
+        let (qty, src, dest) = scan_fmt_some!(line, "move {} from {} to {}", usize, usize, usize);
+        parsed_ins.push(CrateCommands {
+            quantity:qty.unwrap(),
+            source:src.unwrap() - 1,
+            destination: dest.unwrap() - 1
+        });
+    }
 
-                // strNums = ["2", "6"]
-                for (ni, str_num) in str_nums.iter().enumerate() {
-                    let num = str_num.parse::<i32>().unwrap();
-                    if i == 0 { // lower bound
-                        if ni == 0 { // first num 
-                            first_lower = num;
-                        } else { // second num
-                            first_upper = num;
-                        }
-                    } else {
-                        if ni == 0 { // first num 
-                            sec_lower = num;
-                        } else { // second num
-                            sec_upper = num;
-                        }
-                    }
-                }
-            }
-            // println!("{} {} {} {}", first_lower, first_upper, sec_lower, sec_upper);
+    for ins in &parsed_ins {
+        if ins.quantity == 1 {
+            let removed = crates.get_mut(&ins.source).unwrap().pop_front(); 
+            crates.get_mut(&ins.destination).unwrap().push_front(removed.unwrap());
+        } else {
+            let mut removed_mult: VecDeque<char> = crates.get_mut(&ins.source).unwrap().drain(..ins.quantity).collect(); 
+            let len = removed_mult.len();
+            dbg!(&removed_mult);
 
-            if first_upper >= sec_lower && first_lower <= sec_upper {
-                // println!("Overlap");
-                println!("{:?}", halves);
-                num_contained_ranges += 1;
-            } else {
-                // println!("{:?}", halves);
+            for _crt in 0..len {
+                let removed = removed_mult.pop_back(); 
+                crates.get_mut(&ins.destination).unwrap().push_front(removed.unwrap());
+                dbg!(&crates);
             }
         }
     }
 
-    println!("{}", num_contained_ranges);
-}
 
+    let mut top_crates = vec![];
+
+    for key in crates.keys().sorted() {
+        dbg!(key);
+        top_crates.push(crates.get(key).unwrap()[0]);
+    }
+
+    println!("{:?}", top_crates);
+
+    return Ok(());
+}

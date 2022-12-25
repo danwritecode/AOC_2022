@@ -25,16 +25,6 @@ fn main() -> Result<()> {
         [0]
     ]);
 
-    // for _ in 0..5 {
-    //     let len_y = grid.len_of(Axis(0));
-    //
-    //     let col = iter::repeat(0).take(len_y).collect::<Vec<i32>>();
-    //
-    //     grid.push_column(ArrayView::from(&col)).unwrap();
-    // }
-    //
-    // dbg!(&grid);
-
     let mut head_loc = Coordinate {
         x: 0,
         y: 0
@@ -54,14 +44,20 @@ fn main() -> Result<()> {
 
         match mv.dir {
             'R' => move_right(&mut grid, mv.dist, &mut head_loc, &mut tail_loc),
-            // 'L' => move_left(&mut grid, &mv.dist, &mut head_loc),
-            // 'U' => move_up(&mut grid, &mv.dist, &mut head_loc),
-            // 'D' => move_down(&mut grid, &mv.dist, &mut head_loc),
+            'L' => move_left(&mut grid, mv.dist, &mut head_loc, &mut tail_loc),
+            'U' => move_up(&mut grid, mv.dist, &mut head_loc, &mut tail_loc),
+            'D' => move_down(&mut grid, mv.dist, &mut head_loc, &mut tail_loc),
             _ => ()
         }
+        // println!("{}", grid);
+        // println!("head: {:?}, tail: {:?}", head_loc, tail_loc);
+        // println!("");
     }
 
-    println!("{}", grid);
+
+    let visited = &grid.iter().filter(|c| **c > 0).count();
+
+    println!("{}", visited);
 
     return Ok(());
 }
@@ -95,13 +91,22 @@ fn move_right(
 
         // if they're both on same, y, we can just move to the right
         // we also have to add 1 to the location for future tracking
+
+        if head_loc.y == tail_loc.y && head_loc.x == tail_loc.x {
+            continue;
+        }
+
         if head_loc.y == tail_loc.y {
             grid.row_mut(head_loc.y)[head_loc.x - 1] += 1;
             tail_loc.x = head_loc.x - 1;
-        } else if &head_loc.x - &tail_loc.x > 1 {
+            continue;
+        } 
+
+        if &head_loc.x - &tail_loc.x > 1 {
             grid.row_mut(head_loc.y)[head_loc.x - 1] += 1;
             tail_loc.x = head_loc.x - 1;
             tail_loc.y = head_loc.y;
+            continue;
         }
     }
 }
@@ -127,7 +132,6 @@ fn move_left(
                 // now we can add this new column to the matrix
                 grid_new.push_column(ArrayView::from(&col)).unwrap();
             }
-            dbg!(&grid_new);
             *grid = grid_new;
             head_loc.x = 0;
             // we need to add to the tail location because we expanded the grid to the left
@@ -139,13 +143,21 @@ fn move_left(
 
         // if they're both on same, y, we can just move to the left
         // we also have to add 1 to the location for future tracking
+        if head_loc.y == tail_loc.y && head_loc.x == tail_loc.x {
+            continue;
+        }
+
         if head_loc.y == tail_loc.y {
             grid.row_mut(head_loc.y)[head_loc.x + 1] += 1;
             tail_loc.x = head_loc.x + 1;
-        } else if head_loc.x.abs_diff(tail_loc.x) > 1 {
+            continue;
+        }
+
+        if head_loc.x.abs_diff(tail_loc.x) > 1 {
             grid.row_mut(head_loc.y)[head_loc.x + 1] += 1;
             tail_loc.x = head_loc.x + 1;
             tail_loc.y = head_loc.y;
+            continue;
         }
     }
 }
@@ -172,7 +184,6 @@ fn move_up(
                 // now we can add this new column to the matrix
                 grid_new.push_row(ArrayView::from(&row)).unwrap();
             }
-            dbg!(&grid_new);
             *grid = grid_new;
             head_loc.y = 0;
             // we need to add to the tail location because we expanded the grid to the left
@@ -184,13 +195,21 @@ fn move_up(
 
         // if they're both on same, x, we can just move up
         // we also have to add 1 to the location for future tracking
+        if head_loc.y == tail_loc.y && head_loc.x == tail_loc.x {
+            continue;
+        }
+
         if head_loc.x == tail_loc.x {
             grid.row_mut(head_loc.y + 1)[head_loc.x] += 1;
             tail_loc.y = head_loc.y + 1;
-        } else if head_loc.y.abs_diff(tail_loc.y) > 1 {
+            continue;
+        }
+
+        if head_loc.y.abs_diff(tail_loc.y) > 1 {
             grid.row_mut(head_loc.y + 1)[head_loc.x] += 1;
             tail_loc.y = head_loc.y + 1;
             tail_loc.x = head_loc.x;
+            continue;
         }
     }
 }
@@ -211,25 +230,34 @@ fn move_down(
         // if the cur point is equal to length of X axis, then we're
         // at the END and need to add a new column
         if head_loc.y == len_y - 1 {
-            // This creates a new column shaped like [0,0,0,0,0] if len_y = 5 for example
+            // This creates a new row shaped like [0,0,0,0,0] if len_x = 5 for example
             // This is required because the new column needs to match the current shape
             // of the existing matrix. Otherwise it throws an error
-            let col = iter::repeat(0).take(len_x).collect::<Vec<i32>>();
+            let row = iter::repeat(0).take(len_x).collect::<Vec<i32>>();
             // now we can add this new column to the matrix
-            grid.push_row(ArrayView::from(&col)).unwrap();
-        }        
+            grid.push_row(ArrayView::from(&row)).unwrap();
+        } 
+
         // move head down by 1
         head_loc.y = head_loc.y + 1;
 
-        // if they're both on same, y, we can just move to the right
+        // if they're both on same, y, we can just move down
         // we also have to add 1 to the location for future tracking
+        if head_loc.y == tail_loc.y && head_loc.x == tail_loc.x {
+            continue;
+        }
+
         if head_loc.x == tail_loc.x {
             grid.row_mut(head_loc.y - 1)[head_loc.x] += 1;
             tail_loc.y = head_loc.y - 1;
-        } else if &head_loc.y - &tail_loc.y > 1 {
+            continue;
+        }
+
+        if &head_loc.y - &tail_loc.y > 1 {
             grid.row_mut(head_loc.y - 1)[head_loc.x] += 1;
             tail_loc.y = head_loc.y - 1;
             tail_loc.x = head_loc.x;
+            continue;
         }
     }
 
@@ -575,16 +603,16 @@ fn move_up_diag_stay_test() {
 fn move_down_simple_test() {
     // arrange
     let mut grid = arr2(&[[0]]);
-    let expected_grid = arr2(&[[0],[1],[1],[1],[1]]);
+    let expected_grid = arr2(&[[1],[1],[1],[1],[0]]);
 
     let mut head_loc = Coordinate { x: 0, y: 0 };
-    let exp_head = Coordinate { x: 0, y: 0 };
+    let exp_head = Coordinate { x: 0, y: 4 };
 
     let mut tail_loc = Coordinate { x: 0, y: 0 };
-    let exp_tail = Coordinate { x: 0, y: 1 };
+    let exp_tail = Coordinate { x: 0, y: 3 };
 
     // act
-    move_up(&mut grid, 4, &mut head_loc, &mut tail_loc);
+    move_down(&mut grid, 4, &mut head_loc, &mut tail_loc);
 
     // assert
     assert_eq!(grid, expected_grid);
@@ -598,23 +626,23 @@ fn move_down_simple_test() {
 fn move_down_diag_move_test() {
     // arrange
     let mut grid = arr2(&[
-        [0,0], 
-        [1,1]
+        [1,0], 
+        [1,0]
     ]);
     let expected_grid = arr2(&[
-        [0,0], 
         [1,0], 
-        [1,1]
+        [1,1], 
+        [0,0]
     ]);
 
-    let mut head_loc = Coordinate { x: 0, y: 0 };
-    let exp_head = Coordinate { x: 0, y: 0 };
+    let mut head_loc = Coordinate { x: 1, y: 1 };
+    let exp_head = Coordinate { x: 1, y: 2 };
 
-    let mut tail_loc = Coordinate { x: 1, y: 1 };
-    let exp_tail = Coordinate { x: 0, y: 1 };
+    let mut tail_loc = Coordinate { x: 0, y: 0 };
+    let exp_tail = Coordinate { x: 1, y: 1 };
 
     // act
-    move_up(&mut grid, 1, &mut head_loc, &mut tail_loc);
+    move_down(&mut grid, 1, &mut head_loc, &mut tail_loc);
 
     // assert
     assert_eq!(grid, expected_grid);
@@ -628,24 +656,24 @@ fn move_down_diag_move_test() {
 fn move_down_diag_move_noexpansion_test() {
     // arrange
     let mut grid = arr2(&[
-        [0,0], 
-        [0,0], 
-        [1,1]
+        [1,0], 
+        [1,0], 
+        [0,0]
     ]);
     let expected_grid = arr2(&[
-        [0,0], 
         [1,0], 
-        [1,1]
+        [1,1], 
+        [0,0]
     ]);
 
-    let mut head_loc = Coordinate { x: 0, y: 1 };
-    let exp_head = Coordinate { x: 0, y: 0 };
+    let mut head_loc = Coordinate { x: 1, y: 1 };
+    let exp_head = Coordinate { x: 1, y: 2 };
 
-    let mut tail_loc = Coordinate { x: 1, y: 2 };
-    let exp_tail = Coordinate { x: 0, y: 1 };
+    let mut tail_loc = Coordinate { x: 0, y: 0 };
+    let exp_tail = Coordinate { x: 1, y: 1 };
 
     // act
-    move_up(&mut grid, 1, &mut head_loc, &mut tail_loc);
+    move_down(&mut grid, 1, &mut head_loc, &mut tail_loc);
 
     // assert
     assert_eq!(grid, expected_grid);
@@ -669,14 +697,14 @@ fn move_down_diag_stay_test() {
         [1,0]
     ]);
 
-    let mut head_loc = Coordinate { x: 1, y: 2 };
-    let exp_head = Coordinate { x: 1, y: 1 };
+    let mut head_loc = Coordinate { x: 1, y: 1 };
+    let exp_head = Coordinate { x: 1, y: 2 };
 
-    let mut tail_loc = Coordinate { x: 0, y: 2 };
-    let exp_tail = Coordinate { x: 0, y: 2 };
+    let mut tail_loc = Coordinate { x: 0, y: 1 };
+    let exp_tail = Coordinate { x: 0, y: 1 };
 
     // act
-    move_up(&mut grid, 1, &mut head_loc, &mut tail_loc);
+    move_down(&mut grid, 1, &mut head_loc, &mut tail_loc);
 
     // assert
     assert_eq!(grid, expected_grid);
